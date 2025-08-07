@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-TARGET_LIST_ID = "6872c1af0c3a76ed22333c06"  # seu LIST_ID da lista “Aguardando”
+TARGET_LIST_ID = os.getenv("TRELLO_LIST_ID")
 
 @app.route("/trello-webhook", methods=["HEAD", "POST"])
 def trello_webhook():

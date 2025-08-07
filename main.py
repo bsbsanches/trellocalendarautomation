@@ -7,25 +7,25 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+# ─── Carrega variáveis do .env ─────────────────────────────────
+load_dotenv()  # Lê o arquivo .env e popula as variáveis de ambiente
+
 # ─── Configurações ────────────────────────────────────────────────
-LIST_ID        = "6872c1af0c3a76ed22333c06"       # ex: "6872c1a8efa31f7532ea4d44"
-STATE_FILE     = "processed_cards.json"       # onde guardamos os IDs já processados
-CREDENTIALS    = "credentials.json"           # baixado do Google Cloud
-TOKEN_FILE     = "token.json"                 # gerado na primeira autenticação
+LIST_ID        = os.getenv("TRELLO_LIST_ID")  # ID da lista no Trello
+API_KEY        = os.getenv("TRELLO_KEY")       # Chave da API do Trello
+TOKEN          = os.getenv("TRELLO_TOKEN")     # Token de acesso ao Trello
+STATE_FILE     = "processed_cards.json"         # Onde guardamos os IDs já processados
+CREDENTIALS    = "credentials.json"             # Credenciais do Google Cloud
+TOKEN_FILE     = "token.json"                   # Arquivo de token gerado pelo OAuth
 SCOPES         = ['https://www.googleapis.com/auth/calendar']
 TIMEZONE       = 'America/Sao_Paulo'
-DEFAULT_DUR_HR = 1                             # duração padrão (horas)
+DEFAULT_DUR_HR = 1                                # Duração padrão do evento (horas)
 # ────────────────────────────────────────────────────────────────
-
-# Carrega variáveis do .env
-load_dotenv()
-API_KEY = os.getenv("TRELLO_KEY")
-TOKEN   = os.getenv("TRELLO_TOKEN")
 
 # Inicializa cliente Trello
 trello = TrelloClient(api_key=API_KEY, token=TOKEN)
 
-# Função para obter serviço Google Calendar
+# Função para obter serviço do Google Calendar
 def get_calendar_service():
     creds = None
     if os.path.exists(TOKEN_FILE):
@@ -50,15 +50,16 @@ cards = trello_list.list_cards()
 
 calendar_service = get_calendar_service()
 
+# Processa cada cartão não processado
 for card in cards:
     if card.id not in processed:
         # Define horário do evento
-        if card.due:  # se tiver data de entrega no Trello
+        if card.due:
             start = datetime.datetime.fromisoformat(card.due)
-            end   = start + datetime.timedelta(hours=DEFAULT_DUR_HR)
-        else:        # sem due date, agenda para daqui a 5 min
+            end = start + datetime.timedelta(hours=DEFAULT_DUR_HR)
+        else:
             start = datetime.datetime.now() + datetime.timedelta(minutes=5)
-            end   = start + datetime.timedelta(hours=DEFAULT_DUR_HR)
+            end = start + datetime.timedelta(hours=DEFAULT_DUR_HR)
 
         event = {
             'summary':     card.name,
@@ -81,7 +82,7 @@ for card in cards:
         print(f"[+] Evento criado para '{card.name}': {created.get('htmlLink')}")
         processed.add(card.id)
 
-# Salva o estado atualizado
+# Salva o estado atualizado com todos os cartões processados
 with open(STATE_FILE, 'w') as f:
     json.dump(list(processed), f)
 
