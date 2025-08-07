@@ -1,0 +1,7 @@
+# chaves e tokens
+.env
+token.json
+credentials.json
+
+# estado local
+processed_cards.json
